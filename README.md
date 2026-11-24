@@ -212,3 +212,4 @@ Case37-Online-Grocery/
 ## Academic Verification & Compliance
 
 This repository satisfies all requirements specified in pages 148–151 of the Dayananda Sagar University Integrated Project Handbook for **Case 37: Online Grocery**. All 55 deliverables (5 Case Tasks, 25 Theory Answers, and 25 Practical Lab Experiments) are implemented, executed, and substantiated with genuine local evidence.
+

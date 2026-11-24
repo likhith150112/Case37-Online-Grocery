@@ -38,3 +38,4 @@ This document records all instances where Generative AI was used to assist durin
 - **Primary Value Delivered by ChatGPT:** Rapid structuring of informal requirements, boilerplate elimination in dataclass definitions, and brainstorming boundary test permutations.
 - **Critical Limitations Observed:** Tendency to overlook concurrency hazards in multi-user databases, subtle boundary flaws (negative prices), and initial case-sensitivity blind spots in string set intersections.
 - **Conclusion:** ChatGPT served as an effective cognitive accelerator, but rigorous software engineering discipline, static analysis, and local testing were indispensable to produce reliable, safe software.
+

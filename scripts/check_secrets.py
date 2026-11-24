@@ -21,3 +21,4 @@ if violations:
         print(f'  {v[0]}:{v[1]} -> {v[2]}')
 else:
     print('CONFIRMED: Clean repository. Zero hardcoded secrets, passwords, or personal tokens detected.')
+
