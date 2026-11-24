@@ -1,0 +1,37 @@
+# Python & Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+
+# Databases & Local Logs
+*.db
+*.sqlite3
+instance/
+*.log
+execution_logs/*.tmp
+
+# Assignment PDFs (keep repository clean of large source books)
+SE_75_Projects_Integrated_Handbook.pdf
+SE_Integrated_Project_Handbook.pdf
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jenkins / CI local artifacts
+.scannerwork/
+
