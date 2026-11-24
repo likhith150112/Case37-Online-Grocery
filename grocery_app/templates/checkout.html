@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout & Delivery Slot Selection - FreshCart{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-success text-white py-3">
+                <h4 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i> Delivery Slot Selection & Order Checkout</h4>
+            </div>
+
+            <div class="card-body p-4">
+                <form action="{{ url_for('place_order') }}" method="POST" id="checkout-form">
+                    <!-- Section 1: Customer Contact -->
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="bi bi-person-fill text-success me-1"></i> 1. Customer Details
+                    </h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="customer_name" class="form-label fw-semibold">Customer Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" placeholder="e.g. Likhith Gowda" value="Likhith Gowda" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label fw-semibold">Contact Mobile Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="10-digit mobile number" value="9876543210" pattern="[0-9]{10}" required>
+                            <div class="form-text">Used for SMS order tracking and delivery coordination.</div>
+                        </div>
+                        <div class="col-12">
+                            <label for="address" class="form-label fw-semibold">Delivery Address <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="address" name="address" rows="2" placeholder="House/Flat No, Street, Landmark, Bengaluru" required>No. 37, 5th Main, Kumaraswamy Layout, Bengaluru - 560078</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Delivery Slot Selection -->
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="bi bi-calendar-check-fill text-success me-1"></i> 2. Guaranteed Delivery Slot Selection
+                    </h5>
+                    <p class="text-muted small mb-3">Slots are managed with strict capacity limits to ensure fresh, on-time delivery. Overbooked slots are automatically locked.</p>
+
+                    <div class="row g-3 mb-4">
+                        {% for slot in slots %}
+                        <div class="col-md-6">
+                            <div class="card h-100 border {% if slot.is_full %}border-danger bg-light-subtle opacity-75{% else %}border-success-subtle{% endif %}">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="slot_id" id="slot-{{ slot.id }}" value="{{ slot.id }}" {% if slot.is_full %}disabled{% elif loop.first %}checked{% endif %} required>
+                                        <label class="form-check-label fw-bold d-block" for="slot-{{ slot.id }}">
+                                            {{ slot.slot_name }}
+                                        </label>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="small text-muted">Time: {{ slot.start_time }} – {{ slot.end_time }}</span>
+                                            {% if slot.is_full %}
+                                                <span class="badge bg-danger">SLOT FULL ({{ slot.capacity }}/{{ slot.capacity }})</span>
+                                            {% else %}
+                                                <span class="badge bg-success-subtle text-success">{{ slot.available }} slots remaining</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Section 3: Dietary and Substitution Preferences -->
+                    <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                        <i class="bi bi-sliders text-success me-1"></i> 3. Customer Preferences & Allergies
+                    </h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="dietary_preference" class="form-label fw-semibold">Dietary Profile</label>
+                            <select class="form-select" id="dietary_preference" name="dietary_preference">
+                                <option value="Standard" selected>Standard (No Restrictions)</option>
+                                <option value="Vegetarian">100% Vegetarian</option>
+                                <option value="Gluten-Free">Gluten-Free Preference</option>
+                                <option value="Vegan">Vegan (Plant-Based)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Auto-Substitution Policy</label>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="auto_sub_allowed" checked disabled>
+                                <label class="form-check-label small" for="auto_sub_allowed">
+                                    Always require my explicit approval for substitutions (Case 37 requirement).
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Price Breakdown -->
+                    <div class="bg-light p-3 rounded mb-4 border">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Cart Subtotal:</span>
+                            <span class="fw-bold">₹{{ "%.2f"|format(subtotal) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Delivery Charges:</span>
+                            <span class="text-success fw-bold">{% if delivery_fee == 0 %}FREE{% else %}₹{{ "%.2f"|format(delivery_fee) }}{% endif %}</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between fs-5">
+                            <strong class="text-dark">Grand Total Payable:</strong>
+                            <strong class="text-success">₹{{ "%.2f"|format(grand_total) }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Modify Cart
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg px-4 fw-bold" id="confirm-order-btn">
+                            <i class="bi bi-check-circle-fill me-2"></i> Confirm & Place Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

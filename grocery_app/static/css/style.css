@@ -1,0 +1,38 @@
+/* FreshCart Custom CSS Stylesheet */
+:root {
+    --fc-primary: #198754;
+    --fc-primary-hover: #146c43;
+    --fc-accent: #ffc107;
+    --fc-dark: #212529;
+    --fc-light-bg: #f8f9fa;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+}
+
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+}
+
+.substitution-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.85rem 0.75rem;
+}

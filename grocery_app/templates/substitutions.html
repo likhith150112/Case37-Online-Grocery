@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Intelligent Substitution Review - FreshCart{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-warning text-dark px-3 py-1 mb-1 fw-bold">Case 37 Prototype Module</span>
+                <h2 class="fw-bold text-success mb-1"><i class="bi bi-arrow-repeat me-2"></i> Intelligent Product Substitution Engine</h2>
+                <p class="text-muted mb-0">When your chosen item is unavailable, our AI and rule-driven engine evaluates category match, price caps (±20%), inventory availability, and customer dietary filters.</p>
+            </div>
+            <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Cart</a>
+        </div>
+    </div>
+</div>
+
+{% if proposals %}
+    {% for prop in proposals %}
+    <div class="card shadow-sm border-0 mb-4 substitution-card">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Unavailable Item: {{ prop.original.name }}</span>
+            <span class="badge bg-secondary-subtle text-secondary">{{ prop.original.category }} • Qty: {{ prop.quantity }}</span>
+        </div>
+
+        <div class="card-body">
+            <div class="row align-items-center g-4">
+                <!-- Original Item Card (Unavailable) -->
+                <div class="col-md-5">
+                    <div class="p-3 border rounded bg-light-subtle h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-danger">Out of Stock</span>
+                            <span class="text-muted small">SKU: {{ prop.original.sku }}</span>
+                        </div>
+                        <h5 class="fw-bold text-dark">{{ prop.original.name }}</h5>
+                        <p class="small text-muted mb-2">{{ prop.original.description }}</p>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <span class="text-muted small">Original Price:</span>
+                            <span class="fs-5 fw-bold text-muted text-decoration-line-through">₹{{ "%.2f"|format(prop.original.price) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparison Arrow & Match Metric -->
+                <div class="col-md-2 text-center">
+                    <div class="d-none d-md-block">
+                        <i class="bi bi-arrow-right-circle-fill text-success fs-1"></i>
+                        <div class="small fw-bold text-success mt-1">Recommended Replacement</div>
+                        {% if prop.suggestion.match_score > 0 %}
+                            <span class="badge bg-success-subtle text-success mt-1">Score: {{ (prop.suggestion.match_score * 100)|round }}%</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-md-none text-center my-2">
+                        <i class="bi bi-arrow-down-circle-fill text-success fs-2"></i>
+                    </div>
+                </div>
+
+                <!-- Suggested Substitute Card -->
+                <div class="col-md-5">
+                    {% if prop.suggestion.selected_product %}
+                    <div class="p-3 border border-success rounded bg-success-subtle h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success"><i class="bi bi-stars me-1"></i> Top AI Suggestion</span>
+                            <span class="text-muted small">SKU: {{ prop.suggestion.selected_product.sku }}</span>
+                        </div>
+                        <h5 class="fw-bold text-success">{{ prop.suggestion.selected_product.name }}</h5>
+                        <p class="small text-muted mb-2">{{ prop.suggestion.selected_product.description }}</p>
+
+                        <!-- Tags & Match Factors -->
+                        <div class="mb-2">
+                            {% for tag in prop.suggestion.selected_product.tags %}
+                                <span class="badge bg-light text-dark border me-1 small">#{{ tag }}</span>
+                            {% endfor %}
+                            <span class="badge bg-info-subtle text-info border small"><i class="bi bi-check2-circle"></i> In Stock ({{ prop.suggestion.selected_product.stock_qty }})</span>
+                        </div>
+
+                        <!-- Price Comparison -->
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div>
+                                <span class="fs-5 fw-bold text-success">₹{{ "%.2f"|format(prop.suggestion.selected_product.price) }}</span>
+                                <span class="small {% if prop.suggestion.price_difference > 0 %}text-danger{% elif prop.suggestion.price_difference < 0 %}text-success{% else %}text-muted{% endif %} fw-bold ms-1">
+                                    ({% if prop.suggestion.price_difference > 0 %}+{% endif %}₹{{ "%.2f"|format(prop.suggestion.price_difference) }})
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Decision Actions: Accept or Reject -->
+                        <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                            <form action="{{ url_for('handle_substitution_action') }}" method="POST" class="flex-grow-1">
+                                <input type="hidden" name="original_sku" value="{{ prop.original.sku }}">
+                                <input type="hidden" name="substitute_sku" value="{{ prop.suggestion.selected_product.sku }}">
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="btn btn-success btn-sm w-100 fw-bold" id="accept-substitute-{{ prop.original.sku }}">
+                                    <i class="bi bi-check-lg me-1"></i> Accept Substitute
+                                </button>
+                            </form>
+
+                            <form action="{{ url_for('handle_substitution_action') }}" method="POST">
+                                <input type="hidden" name="original_sku" value="{{ prop.original.sku }}">
+                                <input type="hidden" name="action" value="reject">
+                                <button type="submit" class="btn btn-outline-danger btn-sm fw-bold" id="reject-substitute-{{ prop.original.sku }}">
+                                    <i class="bi bi-x-lg me-1"></i> Reject
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-3 border border-danger rounded bg-light-subtle h-100 text-center">
+                        <i class="bi bi-slash-circle text-danger fs-2 mb-2"></i>
+                        <h6 class="text-danger fw-bold">No Eligible Substitute Found</h6>
+                        <p class="small text-muted">{{ prop.suggestion.reason }}</p>
+                        <form action="{{ url_for('handle_substitution_action') }}" method="POST">
+                            <input type="hidden" name="original_sku" value="{{ prop.original.sku }}">
+                            <input type="hidden" name="action" value="reject">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Remove from Basket</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Alternate Candidates Dropdown -->
+            {% if prop.alternatives and prop.alternatives|length > 1 %}
+            <div class="mt-3 pt-3 border-top">
+                <a class="small text-decoration-none text-success fw-bold" data-bs-toggle="collapse" href="#alt-{{ prop.original.sku }}">
+                    <i class="bi bi-chevron-down me-1"></i> View other eligible alternatives in {{ prop.original.category }} ({{ prop.alternatives|length - 1 }} more)
+                </a>
+                <div class="collapse mt-2" id="alt-{{ prop.original.sku }}">
+                    <div class="row row-cols-1 row-cols-md-3 g-2">
+                        {% for alt in prop.alternatives %}
+                            {% if alt.selected_sku != prop.suggestion.selected_sku %}
+                            <div class="col">
+                                <div class="border rounded p-2 bg-white small d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ alt.selected_product.name }}</strong>
+                                        <div class="text-muted">₹{{ "%.2f"|format(alt.selected_product.price) }} (Δ ₹{{ "%.2f"|format(alt.price_difference) }})</div>
+                                    </div>
+                                    <form action="{{ url_for('handle_substitution_action') }}" method="POST">
+                                        <input type="hidden" name="original_sku" value="{{ prop.original.sku }}">
+                                        <input type="hidden" name="substitute_sku" value="{{ alt.selected_product.sku }}">
+                                        <input type="hidden" name="action" value="accept">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Choose</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+{% else %}
+<div class="text-center py-5 bg-white rounded shadow-sm">
+    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 fw-bold">All Items in Your Basket are Available!</h4>
+    <p class="text-muted small">No substitutions required. All current items are in stock and reserved for your order.</p>
+    <a href="{{ url_for('checkout') }}" class="btn btn-success fw-bold px-4 py-2 mt-2">Proceed to Delivery Checkout</a>
+</div>
+{% endif %}
+
+<!-- Rule Explanation Box -->
+<div class="card border-0 bg-white shadow-sm mt-4">
+    <div class="card-body">
+        <h5 class="fw-bold text-dark"><i class="bi bi-info-circle text-primary me-2"></i> How FreshCart Substitution Logic Operates</h5>
+        <div class="row small text-muted g-3 mt-1">
+            <div class="col-md-4">
+                <strong>1. Category Matching:</strong> Replacements must belong to the identical category (e.g., Dairy with Dairy, Staples with Staples).
+            </div>
+            <div class="col-md-4">
+                <strong>2. Price Ceiling Rule:</strong> Suggested replacement cannot exceed the original item price by more than 20% without customer consent.
+            </div>
+            <div class="col-md-4">
+                <strong>3. Dietary & Allergen Safety:</strong> Items with customer-flagged allergens (gluten, tree-nuts, lactose) are strictly eliminated from suggestions.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Grocery Product Catalogue - FreshCart{% endblock %}
+
+{% block content %}
+<!-- Header Hero Banner -->
+<div class="p-4 p-md-5 mb-4 rounded-3 text-bg-success shadow-sm">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <span class="badge bg-warning text-dark px-3 py-2 mb-2 fw-bold text-uppercase">Case 37 • Intelligent Online Grocery</span>
+            <h1 class="display-6 fw-bold">Fresh Daily Groceries with Smart Substitution</h1>
+            <p class="lead mb-3">Order farm-fresh dairy, produce, and pantry staples with guaranteed delivery slots. If an item is out of stock, our intelligent substitution logic automatically suggests safe, category-matched alternatives!</p>
+            <div class="d-flex gap-2">
+                <a href="#catalogue" class="btn btn-warning fw-bold px-4 py-2"><i class="bi bi-cart-plus me-1"></i> Shop Catalogue</a>
+                <a href="{{ url_for('review_substitutions') }}" class="btn btn-outline-light px-3 py-2"><i class="bi bi-arrow-repeat me-1"></i> Substitution Engine</a>
+            </div>
+        </div>
+        <div class="col-md-4 text-center d-none d-md-block">
+            <i class="bi bi-basket3 text-warning" style="font-size: 8rem; opacity: 0.9;"></i>
+        </div>
+    </div>
+</div>
+
+<div id="catalogue" class="row">
+    <!-- Category Filter Sidebar -->
+    <div class="col-lg-3 mb-4">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
+            <div class="card-header bg-success text-white fw-bold">
+                <i class="bi bi-funnel me-1"></i> Filter Categories
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('index', q=search_query) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if not current_category %}active bg-success text-white border-success{% endif %}">
+                    <span><i class="bi bi-grid-3x3-gap-fill me-2"></i> All Categories</span>
+                    <span class="badge rounded-pill bg-light text-dark">{{ products|length }}</span>
+                </a>
+                {% for cat in categories %}
+                <a href="{{ url_for('index', category=cat, q=search_query) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if current_category == cat %}active bg-success text-white border-success{% endif %}">
+                    <span>
+                        <i class="bi {% if cat == 'Dairy' %}bi-cup-straw{% elif cat == 'Staples' %}bi-box-seam{% elif cat == 'Fresh Produce' %}bi-apple{% else %}bi-cake2{% endif %} me-2"></i>
+                        {{ cat }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            <div class="card-body bg-light">
+                <h6 class="fw-bold text-muted small text-uppercase">Prototype Feature Highlight</h6>
+                <p class="small text-muted mb-0">Notice items marked <span class="badge bg-danger">Out of Stock</span> (e.g., Amul Milk, Amul Butter, India Gate Rice). Adding them activates our intelligent substitution logic!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold text-dark mb-0">
+                {% if current_category %}{{ current_category }}{% else %}All Products{% endif %}
+                {% if search_query %}<small class="text-muted fs-6">matching "{{ search_query }}"</small>{% endif %}
+            </h4>
+            <span class="text-muted small">Showing {{ products|length }} items</span>
+        </div>
+
+        {% if products %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for p in products %}
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 product-card position-relative {% if not p.in_stock %}border-warning bg-light-subtle{% endif %}">
+                    <!-- Stock Badge -->
+                    <div class="position-absolute top-0 end-0 m-2">
+                        {% if p.in_stock %}
+                            <span class="badge bg-success-subtle text-success border border-success fw-bold"><i class="bi bi-check-circle me-1"></i> In Stock ({{ p.stock_qty }})</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger fw-bold"><i class="bi bi-exclamation-triangle me-1"></i> Out of Stock</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body d-flex flex-column pt-4">
+                        <span class="badge bg-secondary-subtle text-secondary align-self-start mb-2">{{ p.category }} • {{ p.unit }}</span>
+                        <h5 class="card-title fw-bold text-dark mb-1">{{ p.name }}</h5>
+                        <p class="card-text text-muted small flex-grow-1 mb-2">{{ p.description }}</p>
+
+                        <!-- Product Tags & Allergens -->
+                        <div class="mb-3">
+                            {% for tag in p.tags %}
+                                <span class="badge bg-light text-dark border me-1 small">#{{ tag }}</span>
+                            {% endfor %}
+                            {% for alg in p.allergens %}
+                                <span class="badge bg-danger text-white me-1 small"><i class="bi bi-shield-exclamation"></i> {{ alg }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Price and Add Button -->
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div>
+                                <span class="fs-4 fw-bold text-success">₹{{ "%.2f"|format(p.price) }}</span>
+                                <span class="text-muted small">/ {{ p.unit }}</span>
+                            </div>
+
+                            <form action="{{ url_for('add_to_cart') }}" method="POST" class="d-flex align-items-center">
+                                <input type="hidden" name="sku" value="{{ p.sku }}">
+                                <input type="hidden" name="quantity" value="1">
+                                {% if p.in_stock %}
+                                    <button type="submit" class="btn btn-outline-success fw-bold add-cart-btn" id="add-to-cart-{{ p.sku }}">
+                                        <i class="bi bi-cart-plus me-1"></i> Add
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-outline-warning text-dark fw-bold add-cart-btn" id="add-to-cart-{{ p.sku }}" title="Out of stock - will suggest alternative">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Add (Sub)
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5 bg-white rounded shadow-sm">
+            <i class="bi bi-search text-muted fs-1 mb-3"></i>
+            <h5>No grocery items found matching your filter</h5>
+            <p class="text-muted small">Try searching for other items like milk, bread, butter, or reset filters.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-success">View All Products</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

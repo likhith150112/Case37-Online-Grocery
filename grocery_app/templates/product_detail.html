@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Details - FreshCart{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge bg-secondary-subtle text-secondary fs-6">{{ product.category }} • {{ product.unit }}</span>
+                    {% if product.in_stock %}
+                        <span class="badge bg-success-subtle text-success border border-success fs-6"><i class="bi bi-check-circle me-1"></i> In Stock ({{ product.stock_qty }} available)</span>
+                    {% else %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger fs-6"><i class="bi bi-exclamation-triangle me-1"></i> Out of Stock</span>
+                    {% endif %}
+                </div>
+
+                <h2 class="fw-bold text-dark mb-2">{{ product.name }}</h2>
+                <p class="lead text-muted">{{ product.description }}</p>
+
+                <div class="mb-3">
+                    {% for tag in product.tags %}
+                        <span class="badge bg-light text-dark border me-1">#{{ tag }}</span>
+                    {% endfor %}
+                    {% for alg in product.allergens %}
+                        <span class="badge bg-danger text-white me-1"><i class="bi bi-shield-exclamation"></i> Contains: {{ alg }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="bg-light p-3 rounded mb-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block">Retail Price:</span>
+                        <span class="display-6 fw-bold text-success">₹{{ "%.2f"|format(product.price) }}</span>
+                    </div>
+
+                    <form action="{{ url_for('add_to_cart') }}" method="POST" class="d-flex gap-2 align-items-center">
+                        <input type="hidden" name="sku" value="{{ product.sku }}">
+                        <input type="number" name="quantity" value="1" min="1" max="20" class="form-control" style="width: 80px;">
+                        <button type="submit" class="btn btn-success fw-bold px-4 py-2">
+                            <i class="bi bi-cart-plus me-1"></i> Add to Basket
+                        </button>
+                    </form>
+                </div>
+
+                <!-- If Out of Stock, show immediate substitution preview -->
+                {% if not product.in_stock and substitutes %}
+                <div class="border border-warning rounded p-3 bg-warning-subtle mb-3">
+                    <h5 class="fw-bold text-dark mb-2"><i class="bi bi-arrow-repeat text-warning me-2"></i> Recommended Substitutions (In Stock)</h5>
+                    <p class="small text-muted mb-3">Because this item is out of stock, our engine detected these eligible alternatives in {{ product.category }}:</p>
+                    <div class="list-group">
+                        {% for sub in substitutes %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center bg-white mb-1 rounded border">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ sub.selected_product.name }}</h6>
+                                <span class="small text-muted">{{ sub.reason }}</span>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-success">₹{{ "%.2f"|format(sub.selected_product.price) }}</div>
+                                <form action="{{ url_for('add_to_cart') }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="sku" value="{{ sub.selected_product.sku }}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-sm btn-outline-success mt-1">Add Alternate</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back to Catalogue</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
